@@ -1,67 +1,77 @@
 import { useState, useEffect } from "react";
 
-const FONT_URL = "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap";
-
-const STYLE = [
-  "@import url('" + FONT_URL + "');",
-  "* { box-sizing: border-box; margin: 0; padding: 0; }",
-  ":root { --gold: #c8a96e; --gold-dim: rgba(200,169,110,0.3); --bg: #07060a; --ink: #e8ddd0; --muted: #7a6e62; --deep: rgba(255,255,255,0.04); }",
-  ".app { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: sans-serif; font-weight: 300; }",
-  ".stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }",
-  ".wrap { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 20px 100px; }",
-  ".hero { padding: 64px 0 48px; text-align: center; border-bottom: 1px solid var(--gold-dim); }",
-  ".hero-emblem { font-size: 18px; letter-spacing: 0.5em; color: var(--gold); margin-bottom: 28px; font-style: italic; }",
-  ".hero-title { font-size: 32px; font-weight: 500; line-height: 1.5; color: var(--ink); margin-bottom: 12px; letter-spacing: 0.08em; }",
-  ".hero-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.2em; line-height: 2; }",
-  ".price-tag { display: inline-flex; align-items: baseline; gap: 4px; margin-top: 28px; padding: 12px 32px; border: 1px solid var(--gold-dim); background: rgba(200,169,110,0.06); }",
-  ".price-yen { font-size: 14px; color: var(--gold); }",
-  ".price-num { font-size: 42px; font-weight: 300; color: var(--gold); line-height: 1; }",
-  ".price-note { font-size: 11px; color: var(--muted); letter-spacing: 0.2em; }",
-  ".section { padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }",
-  ".section-label { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 24px; }",
-  ".field { margin-bottom: 20px; }",
-  ".label { display: block; font-size: 11px; letter-spacing: 0.25em; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }",
-  ".input { width: 100%; background: var(--deep); border: 1px solid rgba(200,169,110,0.2); color: var(--ink); font-size: 15px; padding: 12px 16px; outline: none; }",
-  ".input:focus { border-color: rgba(200,169,110,0.55); }",
-  ".input::placeholder { color: rgba(232,221,208,0.2); }",
-  ".date-row { display: flex; gap: 8px; }",
-  ".date-unit { flex: 1; }",
-  ".date-cap { font-size: 10px; text-align: center; color: rgba(122,110,98,0.7); letter-spacing: 0.2em; margin-top: 5px; }",
-  ".items-grid { display: grid; gap: 12px; }",
-  ".item-card { display: flex; gap: 16px; padding: 18px 20px; background: var(--deep); border: 1px solid rgba(255,255,255,0.06); }",
-  ".item-icon { font-size: 20px; flex-shrink: 0; }",
-  ".item-title { font-size: 15px; color: var(--ink); margin-bottom: 4px; }",
-  ".item-desc { font-size: 12px; color: var(--muted); line-height: 1.8; }",
-  ".pay-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #c8a96e 0%, #9a7a40 100%); border: none; cursor: pointer; font-size: 12px; letter-spacing: 0.4em; color: #07060a; margin-top: 8px; }",
-  ".pay-btn:disabled { opacity: 0.35; cursor: not-allowed; }",
-  ".secure-note { text-align: center; margin-top: 12px; font-size: 11px; color: var(--muted); }",
-  ".loading { padding: 60px 0; text-align: center; }",
-  ".loading-ring { width: 56px; height: 56px; margin: 0 auto 20px; border: 1px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 1.5s linear infinite; }",
-  "@keyframes spin { to { transform: rotate(360deg); } }",
-  ".loading-msg { font-size: 12px; letter-spacing: 0.3em; color: var(--muted); }",
-  ".step { font-size: 11px; color: rgba(122,110,98,0.6); padding: 4px 0; }",
-  ".step.active { color: var(--gold); }",
-  ".report-header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid var(--gold-dim); }",
-  ".report-name { font-size: 24px; color: var(--ink); margin-bottom: 4px; }",
-  ".report-date { font-size: 12px; color: var(--muted); }",
-  ".report-section { padding: 32px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }",
-  ".rs-title { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; }",
-  ".number-display { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }",
-  ".num-circle { width: 72px; height: 72px; flex-shrink: 0; border: 1px solid var(--gold-dim); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }",
-  ".num-val { font-size: 32px; font-weight: 300; color: var(--gold); line-height: 1; }",
-  ".num-label { font-size: 8px; color: var(--muted); margin-top: 2px; }",
-  ".num-info-name { font-size: 18px; color: var(--ink); margin-bottom: 4px; }",
-  ".num-info-kw { font-size: 11px; color: var(--muted); }",
-  ".report-text { font-size: 14px; line-height: 2.2; color: #c0b09a; white-space: pre-wrap; }",
-  ".compat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }",
-  ".compat-card { padding: 14px 16px; background: var(--deep); border: 1px solid rgba(255,255,255,0.06); text-align: center; }",
-  ".compat-num { font-size: 28px; font-weight: 300; color: var(--gold); line-height: 1; margin-bottom: 4px; }",
-  ".compat-label { font-size: 10px; color: var(--muted); }",
-  ".error-box { margin-top: 16px; padding: 14px 18px; border: 1px solid rgba(180,80,80,0.4); color: #c07070; font-size: 13px; text-align: center; }",
-  ".restart-btn { display: block; width: 100%; margin-top: 32px; padding: 14px; border: 1px solid var(--gold-dim); background: transparent; color: var(--gold); font-size: 11px; cursor: pointer; }",
-  ".success-banner { padding: 16px 20px; background: rgba(200,169,110,0.1); border: 1px solid var(--gold-dim); text-align: center; }",
-  ".success-banner-text { font-size: 12px; color: var(--gold); }",
-].join("\n");
+const STYLE = `
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #c8a96e; --gold-dim: rgba(200,169,110,0.3); --bg: #07060a; --ink: #e8ddd0; --muted: #7a6e62; --deep: rgba(255,255,255,0.04);
+}
+.app { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Zen Kaku Gothic New', sans-serif; font-weight: 300; }
+.stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at 20% 20%, rgba(90,50,150,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(30,60,100,0.12) 0%, transparent 60%), radial-gradient(ellipse at 50% 50%, rgba(200,169,110,0.05) 0%, transparent 70%); }
+.wrap { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 20px 100px; }
+.hero { padding: 64px 0 48px; text-align: center; border-bottom: 1px solid var(--gold-dim); }
+.hero-emblem { font-family: 'Cormorant Garamond', serif; font-size: 18px; letter-spacing: 0.5em; color: var(--gold); margin-bottom: 28px; font-style: italic; }
+.hero-title { font-family: 'Shippori Mincho', serif; font-size: 32px; font-weight: 500; line-height: 1.5; color: var(--ink); margin-bottom: 12px; letter-spacing: 0.08em; }
+.hero-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.2em; line-height: 2; }
+.price-tag { display: inline-flex; align-items: baseline; gap: 4px; margin-top: 28px; padding: 12px 32px; border: 1px solid var(--gold-dim); background: rgba(200,169,110,0.06); }
+.price-yen { font-size: 14px; color: var(--gold); }
+.price-num { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--gold); line-height: 1; }
+.price-note { font-size: 11px; color: var(--muted); letter-spacing: 0.2em; }
+.section { padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.section-label { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-dim); }
+.field { margin-bottom: 20px; }
+.label { display: block; font-size: 11px; letter-spacing: 0.25em; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
+.input { width: 100%; background: var(--deep); border: 1px solid rgba(200,169,110,0.2); color: var(--ink); font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 15px; font-weight: 300; padding: 12px 16px; outline: none; transition: border-color 0.3s; }
+.input:focus { border-color: rgba(200,169,110,0.55); }
+.input::placeholder { color: rgba(232,221,208,0.2); }
+.date-row { display: flex; gap: 8px; }
+.date-unit { flex: 1; }
+.date-cap { font-size: 10px; text-align: center; color: rgba(122,110,98,0.7); letter-spacing: 0.2em; margin-top: 5px; text-transform: uppercase; }
+.items-grid { display: grid; gap: 12px; }
+.item-card { display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; background: var(--deep); border: 1px solid rgba(255,255,255,0.06); transition: border-color 0.3s; }
+.item-card:hover { border-color: var(--gold-dim); }
+.item-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.item-title { font-family: 'Shippori Mincho', serif; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.item-desc { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.pay-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #c8a96e 0%, #9a7a40 100%); border: none; cursor: pointer; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; letter-spacing: 0.4em; text-transform: uppercase; color: #07060a; font-weight: 400; transition: opacity 0.3s, transform 0.2s; margin-top: 8px; }
+.pay-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+.pay-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.secure-note { text-align: center; margin-top: 12px; font-size: 11px; color: var(--muted); letter-spacing: 0.15em; }
+.loading { padding: 60px 0; text-align: center; animation: fadeIn 0.5s ease; }
+.loading-ring { width: 56px; height: 56px; margin: 0 auto 20px; border: 1px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 1.5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-msg { font-size: 12px; letter-spacing: 0.3em; color: var(--muted); }
+.loading-steps { margin-top: 16px; }
+.step { font-size: 11px; color: rgba(122,110,98,0.6); letter-spacing: 0.15em; padding: 4px 0; transition: color 0.5s; }
+.step.active { color: var(--gold); }
+.report { animation: fadeUp 0.9s ease forwards; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.report-header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid var(--gold-dim); }
+.report-badge { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
+.report-name { font-family: 'Shippori Mincho', serif; font-size: 24px; color: var(--ink); margin-bottom: 4px; }
+.report-date { font-size: 12px; color: var(--muted); letter-spacing: 0.15em; }
+.report-section { padding: 32px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.rs-title { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.rs-title::before { content: '✦'; font-size: 8px; }
+.number-display { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }
+.num-circle { width: 72px; height: 72px; flex-shrink: 0; border: 1px solid var(--gold-dim); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.num-val { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--gold); line-height: 1; }
+.num-label { font-size: 8px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+.num-info-name { font-family: 'Shippori Mincho', serif; font-size: 18px; color: var(--ink); margin-bottom: 4px; }
+.num-info-kw { font-size: 11px; color: var(--muted); letter-spacing: 0.15em; }
+.report-text { font-size: 14px; line-height: 2.2; color: #c0b09a; white-space: pre-wrap; }
+.compat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.compat-card { padding: 14px 16px; background: var(--deep); border: 1px solid rgba(255,255,255,0.06); text-align: center; }
+.compat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+.compat-label { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+.error-box { margin-top: 16px; padding: 14px 18px; border: 1px solid rgba(180,80,80,0.4); color: #c07070; font-size: 13px; text-align: center; }
+.restart-btn { display: block; width: 100%; margin-top: 32px; padding: 14px; border: 1px solid var(--gold-dim); background: transparent; color: var(--gold); font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; cursor: pointer; transition: background 0.3s; }
+.restart-btn:hover { background: rgba(200,169,110,0.06); }
+.success-banner { padding: 16px 20px; background: rgba(200,169,110,0.1); border: 1px solid var(--gold-dim); text-align: center; }
+.success-banner-text { font-size: 12px; letter-spacing: 0.2em; color: var(--gold); }
+`;
 
 const NUMBER_DATA = {
   1: { name: "先駆者", keyword: "独立・リーダーシップ・創造", compat: [3, 5] },
@@ -82,33 +92,25 @@ const ITEMS = [
   { icon: "◈", title: "ソウルナンバー（魂の欲求）", desc: "内なる本当の望みと、魂レベルで求めているものを明らかに" },
   { icon: "◇", title: "デスティニーナンバー（運命数）", desc: "人生で達成すべき目標と、あなたが世界に与える影響を解読" },
   { icon: "◉", title: "相性の良い数字", desc: "あなたと波動が合うナンバーを2つ厳選してご紹介" },
-  { icon: "*", title: "今月のメッセージ", desc: "現在の宇宙のエネルギーとあなたの数字が交差する、特別なメッセージ" },
+  { icon: "✦", title: "今月のメッセージ", desc: "現在の宇宙のエネルギーとあなたの数字が交差する、特別なメッセージ" },
 ];
 
 const STEPS = ["星図を展開中...", "数字の波動を解析中...", "あなたへのメッセージを紡いでいます..."];
 
 function calcNum(digits) {
   let s = digits.reduce((a, b) => a + b, 0);
-  while (s > 9 && s !== 11 && s !== 22) {
-    s = String(s).split("").map(Number).reduce((a, b) => a + b, 0);
-  }
+  while (s > 9 && s !== 11 && s !== 22) s = String(s).split("").map(Number).reduce((a, b) => a + b, 0);
   return s;
 }
-
-function calcLifePath(y, m, d) {
-  return calcNum((y + m.padStart(2, "0") + d.padStart(2, "0")).split("").map(Number));
-}
-
+function calcLifePath(y, m, d) { return calcNum(`${y}${m.padStart(2,"0")}${d.padStart(2,"0")}`.split("").map(Number)); }
 function calcSoul(name) {
-  const v = { a:1, e:1, i:1, o:1, u:1 };
-  const d = name.toLowerCase().split("").map(c => v[c] || 0).filter(Boolean);
-  return d.length ? calcNum(d) : Math.floor(Math.random() * 9) + 1;
+  const v = { a:1,e:1,i:1,o:1,u:1,あ:1,い:1,う:1,え:1,お:1 };
+  const d = name.toLowerCase().split("").map(c => v[c]||0).filter(Boolean);
+  return d.length ? calcNum(d) : Math.floor(Math.random()*9)+1;
 }
-
 function calcDestiny(name) {
-  const chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん".split("");
-  const map = chars.reduce((a, c, i) => ({ ...a, [c]: i % 9 + 1 }), {});
-  return calcNum(name.split("").map(c => map[c] || 1));
+  const map = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん".split("").reduce((a,c,i)=>({...a,[c]:i%9+1}),{});
+  return calcNum(name.split("").map(c=>map[c]||1));
 }
 
 export default function App() {
@@ -164,7 +166,24 @@ export default function App() {
     const t1 = setTimeout(() => setStepIdx(1), 1200);
     const t2 = setTimeout(() => setStepIdx(2), 2600);
     try {
-      const prompt = "あなたは数秘術の鑑定師です。以下の情報をもとに、詳細な鑑定レポートを日本語で作成してください。\n\n【鑑定情報】\nお名前: " + n + "\n生年月日: " + y + "年" + m + "月" + d + "日\nライフパスナンバー: " + lpn + "（" + lpInfo.name + " / " + lpInfo.keyword + "）\nソウルナンバー: " + soul + "\nデスティニーナンバー: " + destiny + "\n\n以下の4つのセクションを、それぞれ200字前後で書いてください。\n\n【Section1: ライフパスナンバー" + lpn + "の本質】\n\n【Section2: ソウルナンバー" + soul + "が示す魂の欲求】\n\n【Section3: デスティニーナンバー" + destiny + "が描く運命】\n\n【Section4: 今月のメッセージ】";
+      const prompt = `あなたは数秘術の鑑定師です。以下の情報をもとに、詳細な鑑定レポートを日本語で作成してください。
+
+【鑑定情報】
+お名前: ${n}
+生年月日: ${y}年${m}月${d}日
+ライフパスナンバー: ${lpn}（${lpInfo.name} / ${lpInfo.keyword}）
+ソウルナンバー: ${soul}
+デスティニーナンバー: ${destiny}
+
+以下の4つのセクションを、それぞれ200字前後で書いてください。${n}さんへの個人的な語りかけを必ず含め、毎回ユニークな表現を使ってください。
+
+【Section1: ライフパスナンバー${lpn}の本質】
+
+【Section2: ソウルナンバー${soul}が示す魂の欲求】
+
+【Section3: デスティニーナンバー${destiny}が描く運命】
+
+【Section4: 今月のメッセージ】`;
 
       const res = await fetch("/api/generate-reading", {
         method: "POST",
@@ -177,18 +196,15 @@ export default function App() {
       });
 
       const data = await res.json();
-      const text = data.content ? data.content.map(b => b.text || "").join("") : "";
-      const parse = (label) => {
-        const match = text.match(new RegExp("【" + label + "】([\\s\\S]*?)(?=【|$)"));
-        return match ? match[1].trim() : "";
-      };
+      const text = data.content?.map(b => b.text || "").join("") || "";
+      const parse = (label) => { const match = text.match(new RegExp(`【${label}】([\\s\\S]*?)(?=【|$)`)); return match ? match[1].trim() : ""; };
 
       clearTimeout(t1); clearTimeout(t2);
       setReport({
         lpn, soul, destiny, lpInfo,
-        s1: parse("Section1: ライフパスナンバー" + lpn + "の本質"),
-        s2: parse("Section2: ソウルナンバー" + soul + "が示す魂の欲求"),
-        s3: parse("Section3: デスティニーナンバー" + destiny + "が描く運命"),
+        s1: parse(`Section1: ライフパスナンバー${lpn}の本質`),
+        s2: parse(`Section2: ソウルナンバー${soul}が示す魂の欲求`),
+        s3: parse(`Section3: デスティニーナンバー${destiny}が描く運命`),
         s4: parse("Section4: 今月のメッセージ"),
         raw: text, name: n, year: y, month: m, day: d,
       });
@@ -209,7 +225,7 @@ export default function App() {
         <div className="stars" />
         <div className="wrap">
           <div className="hero">
-            <div className="hero-emblem">Premium Reading</div>
+            <div className="hero-emblem">✦ Premium Reading ✦</div>
             <div className="hero-title">数秘術<br />詳細鑑定レポート</div>
             <div className="hero-sub">5つのナンバーであなたの本質・使命・魂の欲求を<br />毎回オリジナルで読み解きます</div>
             <div className="price-tag">
@@ -245,23 +261,23 @@ export default function App() {
                   <label className="label">生年月日</label>
                   <div className="date-row">
                     <div className="date-unit" style={{flex:2}}>
-                      <input className="input" placeholder="1990" maxLength={4} value={year} onChange={e => setYear(e.target.value.replace(/\D/g, ""))} />
+                      <input className="input" placeholder="1990" maxLength={4} value={year} onChange={e => setYear(e.target.value.replace(/\D/g,""))} />
                       <div className="date-cap">年</div>
                     </div>
                     <div className="date-unit">
-                      <input className="input" placeholder="01" maxLength={2} style={{textAlign:"center"}} value={month} onChange={e => setMonth(e.target.value.replace(/\D/g, ""))} />
+                      <input className="input" placeholder="01" maxLength={2} style={{textAlign:"center"}} value={month} onChange={e => setMonth(e.target.value.replace(/\D/g,""))} />
                       <div className="date-cap">月</div>
                     </div>
                     <div className="date-unit">
-                      <input className="input" placeholder="01" maxLength={2} style={{textAlign:"center"}} value={day} onChange={e => setDay(e.target.value.replace(/\D/g, ""))} />
+                      <input className="input" placeholder="01" maxLength={2} style={{textAlign:"center"}} value={day} onChange={e => setDay(e.target.value.replace(/\D/g,""))} />
                       <div className="date-cap">日</div>
                     </div>
                   </div>
                 </div>
                 <button className="pay-btn" disabled={!isValid} onClick={handlePay}>
-                  ¥300で鑑定を受け取る
+                  ✦ ¥300で鑑定を受け取る ✦
                 </button>
-                <div className="secure-note">Stripeによる安全な決済</div>
+                <div className="secure-note">🔒 Stripeによる安全な決済</div>
                 {error && <div className="error-box">{error}</div>}
               </div>
             </>
@@ -271,8 +287,8 @@ export default function App() {
             <div className="loading">
               <div className="loading-ring" />
               <div className="loading-msg">鑑定中</div>
-              <div style={{marginTop:16}}>
-                {STEPS.map((s, i) => <div className={"step" + (i <= stepIdx ? " active" : "")} key={i}>{s}</div>)}
+              <div className="loading-steps">
+                {STEPS.map((s, i) => <div className={`step ${i <= stepIdx ? "active" : ""}`} key={i}>{s}</div>)}
               </div>
             </div>
           )}
@@ -280,51 +296,34 @@ export default function App() {
           {phase === "report" && report && (
             <div className="report">
               <div className="success-banner">
-                <div className="success-banner-text">ご購入ありがとうございます</div>
+                <div className="success-banner-text">✦ ご購入ありがとうございます ✦</div>
               </div>
               <div className="report-header">
+                <div className="report-badge">✦ Premium Report ✦</div>
                 <div className="report-name">{name} 様の鑑定書</div>
                 <div className="report-date">{year}年{month}月{day}日生</div>
               </div>
               <div className="report-section">
                 <div className="rs-title">ライフパスナンバーの本質</div>
                 <div className="number-display">
-                  <div className="num-circle">
-                    <div className="num-val">{report.lpn}</div>
-                    <div className="num-label">Life Path</div>
-                  </div>
-                  <div>
-                    <div className="num-info-name">{report.lpInfo.name}</div>
-                    <div className="num-info-kw">{report.lpInfo.keyword}</div>
-                  </div>
+                  <div className="num-circle"><div className="num-val">{report.lpn}</div><div className="num-label">Life Path</div></div>
+                  <div><div className="num-info-name">{report.lpInfo.name}</div><div className="num-info-kw">{report.lpInfo.keyword}</div></div>
                 </div>
                 <div className="report-text">{report.s1 || report.raw}</div>
               </div>
               <div className="report-section">
                 <div className="rs-title">ソウルナンバー — 魂の欲求</div>
                 <div className="number-display">
-                  <div className="num-circle">
-                    <div className="num-val">{report.soul}</div>
-                    <div className="num-label">Soul</div>
-                  </div>
-                  <div>
-                    <div className="num-info-name">{NUMBER_DATA[report.soul] ? NUMBER_DATA[report.soul].name : "神秘数"}</div>
-                    <div className="num-info-kw">{NUMBER_DATA[report.soul] ? NUMBER_DATA[report.soul].keyword : "特別な使命"}</div>
-                  </div>
+                  <div className="num-circle"><div className="num-val">{report.soul}</div><div className="num-label">Soul</div></div>
+                  <div><div className="num-info-name">{NUMBER_DATA[report.soul]?.name||"神秘数"}</div><div className="num-info-kw">{NUMBER_DATA[report.soul]?.keyword||"特別な使命"}</div></div>
                 </div>
                 {report.s2 && <div className="report-text">{report.s2}</div>}
               </div>
               <div className="report-section">
                 <div className="rs-title">デスティニーナンバー — 運命</div>
                 <div className="number-display">
-                  <div className="num-circle">
-                    <div className="num-val">{report.destiny}</div>
-                    <div className="num-label">Destiny</div>
-                  </div>
-                  <div>
-                    <div className="num-info-name">{NUMBER_DATA[report.destiny] ? NUMBER_DATA[report.destiny].name : "神秘数"}</div>
-                    <div className="num-info-kw">{NUMBER_DATA[report.destiny] ? NUMBER_DATA[report.destiny].keyword : "特別な使命"}</div>
-                  </div>
+                  <div className="num-circle"><div className="num-val">{report.destiny}</div><div className="num-label">Destiny</div></div>
+                  <div><div className="num-info-name">{NUMBER_DATA[report.destiny]?.name||"神秘数"}</div><div className="num-info-kw">{NUMBER_DATA[report.destiny]?.keyword||"特別な使命"}</div></div>
                 </div>
                 {report.s3 && <div className="report-text">{report.s3}</div>}
               </div>
@@ -334,7 +333,7 @@ export default function App() {
                   {report.lpInfo.compat.map(n => (
                     <div className="compat-card" key={n}>
                       <div className="compat-num">{n}</div>
-                      <div className="compat-label">{NUMBER_DATA[n] ? NUMBER_DATA[n].name : "神秘数"}</div>
+                      <div className="compat-label">{NUMBER_DATA[n]?.name||"神秘数"}</div>
                     </div>
                   ))}
                 </div>
@@ -346,7 +345,7 @@ export default function App() {
                 </div>
               )}
               <button className="restart-btn" onClick={() => { setPhase("form"); setReport(null); }}>
-                別の鑑定を受ける
+                ✦ 別の鑑定を受ける ✦
               </button>
             </div>
           )}
