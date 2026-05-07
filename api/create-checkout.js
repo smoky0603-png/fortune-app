@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.origin}/report?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}`,
+      success_url: `${req.headers.origin}/?name=${encodeURIComponent(name)}&year=${year}&month=${month}&day=${day}`,
       cancel_url: `${req.headers.origin}/`,
       metadata: { name, year, month, day },
     });
