@@ -1,4 +1,4 @@
-# 数秘術鑑定アプリ - デプロイ手順
+# タロット占いアプリ - デプロイ手順
 
 ## GitHubへのアップ手順
 
@@ -23,8 +23,8 @@ Vercelダッシュボード → Settings → Environment Variables
 
 | Name | Value |
 |------|-------|
-| STRIPE_SECRET_KEY | sk_live_xxxx（Stripeのシークレットキー） |
+| ANTHROPIC_API_KEY | sk-ant-xxxx（Anthropicのシークレットキー） |
 
 ### 5. 完成！
-デプロイ後に発行されるURLをシェアすれば
-ユーザーが¥300で鑑定を受けられます🎉
+デプロイ後に発行されるURLにアクセスすれば
+テーマを選んでタロットカードを引き、AIによる鑑定文を読むことができます。
