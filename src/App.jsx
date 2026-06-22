@@ -122,11 +122,14 @@ export default function App() {
 
       const sectionLabels = [...selectedTheme.positions, "総合メッセージ"];
       const prompt =
-        "あなたは経験豊富なタロット占い師です。以下の情報をもとに、日本語で鑑定文を書いてください。\n\n" +
+        "あなたは経験豊富なタロット占い師です。以下の情報をもとに、日本語で詳細な鑑定文を書いてください。\n\n" +
         "【占いのテーマ】" + selectedTheme.title + "\n" +
         (question ? "【相談内容】" + question + "\n" : "") +
         "\n【引いたカード】\n" + cardLines + "\n\n" +
-        "各ポジションについて150字程度で、カードの意味と向き（正位置/逆位置）を踏まえた具体的なメッセージを書いてください。最後に「総合メッセージ」として200字程度で全体のまとめを書いてください。\n\n" +
+        "各ポジションについて300字程度で、カードの意味と向き（正位置/逆位置）を踏まえつつ、" +
+        (question ? "相談内容に具体的に絡めながら、" : "") +
+        "そのポジションが示す状況を掘り下げ、最後に一言アドバイスも添えてください。" +
+        "最後に「総合メッセージ」として300字程度で、引いたカード全体のつながりを踏まえた総合的なまとめと、今後への具体的なアドバイスを書いてください。\n\n" +
         sectionLabels.map((label) => "【" + label + "】\n\n").join("");
 
       let perPosition;
@@ -137,7 +140,7 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 1500,
+            max_tokens: 2500,
             messages: [{ role: "user", content: prompt }],
           }),
         });
