@@ -26,6 +26,7 @@ const STYLE = [
   ".theme-card.selected { border-color: var(--gold); background: rgba(200,169,110,0.08); }",
   ".theme-title { font-size: 15px; color: var(--ink); margin-bottom: 4px; }",
   ".theme-count { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; margin-left: 8px; }",
+  ".theme-price { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin-left: 8px; float: right; }",
   ".theme-desc { font-size: 12px; color: var(--muted); line-height: 1.8; }",
   ".field { margin-bottom: 0; }",
   ".label { display: block; font-size: 11px; letter-spacing: 0.25em; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }",
@@ -72,24 +73,28 @@ const THEMES = [
     title: "今日の運勢",
     desc: "1枚引きで、今日1日のメッセージを受け取る",
     positions: ["今日のメッセージ"],
+    price: 0,
   },
   {
     id: "love",
     title: "恋愛",
     desc: "過去・現在・未来の3枚で、恋の行方を読む",
     positions: ["過去", "現在", "未来"],
+    price: 500,
   },
   {
     id: "work",
     title: "仕事・キャリア",
     desc: "過去・現在・未来の3枚で、仕事の流れを読む",
     positions: ["過去", "現在", "未来"],
+    price: 500,
   },
   {
     id: "general",
     title: "総合鑑定",
     desc: "6枚で読み解く、人生全体の流れ",
     positions: ["現在の状況", "障害・課題", "過去の影響", "近い未来", "顕在的な意識", "最終的な結果"],
+    price: 1000,
   },
 ];
 
@@ -135,9 +140,8 @@ export default function App() {
     );
   }
 
-  const handleDraw = async () => {
-    if (!selectedTheme) return;
-    const drawn = drawCards(selectedTheme.positions.length);
+  const runReading = async (theme, q) => {
+    const drawn = drawCards(theme.positions.length);
     setCards(drawn);
     setPhase("loading");
     setStepIdx(0);
@@ -145,21 +149,21 @@ export default function App() {
     const t2 = setTimeout(() => setStepIdx(2), 2600);
 
     try {
-      const cardLines = selectedTheme.positions
+      const cardLines = theme.positions
         .map((pos, i) => {
           const c = drawn[i];
           return pos + ": " + c.nameJa + (c.isReversed ? "（逆位置）" : "（正位置）") + " - " + meaningOf(c);
         })
         .join("\n");
 
-      const sectionLabels = [...selectedTheme.positions, "総合メッセージ"];
+      const sectionLabels = [...theme.positions, "総合メッセージ"];
       const prompt =
         "あなたは経験豊富なタロット占い師です。以下の情報をもとに、日本語で詳細な鑑定文を書いてください。\n\n" +
-        "【占いのテーマ】" + selectedTheme.title + "\n" +
-        (question ? "【相談内容】" + question + "\n" : "") +
+        "【占いのテーマ】" + theme.title + "\n" +
+        (q ? "【相談内容】" + q + "\n" : "") +
         "\n【引いたカード】\n" + cardLines + "\n\n" +
         "各ポジションについて300字程度で、カードの意味と向き（正位置/逆位置）を踏まえつつ、" +
-        (question ? "相談内容に具体的に絡めながら、" : "") +
+        (q ? "相談内容に具体的に絡めながら、" : "") +
         "そのポジションが示す状況を掘り下げ、最後に一言アドバイスも添えてください。" +
         "最後に「総合メッセージ」として300字程度で、引いたカード全体のつながりを踏まえた総合的なまとめと、今後への具体的なアドバイスを書いてください。\n\n" +
         sectionLabels.map((label) => "【" + label + "】\n\n").join("");
@@ -184,12 +188,12 @@ export default function App() {
           const match = text.match(new RegExp("【" + label + "】([\\s\\S]*?)(?=【|$)"));
           return match ? match[1].trim() : "";
         };
-        perPosition = selectedTheme.positions.map((label) => parse(label));
+        perPosition = theme.positions.map((label) => parse(label));
         overall = parse("総合メッセージ");
         if (perPosition.some((t) => !t) || !overall) throw new Error("incomplete AI response");
       } catch (aiError) {
         // AIが使えない場合は、カードの意味から鑑定文をその場で組み立てる
-        const fallback = buildLocalReading(selectedTheme, drawn, question);
+        const fallback = buildLocalReading(theme, drawn, q);
         perPosition = fallback.perPosition;
         overall = fallback.overall;
       }
@@ -201,11 +205,57 @@ export default function App() {
     } catch (e) {
       clearTimeout(t1);
       clearTimeout(t2);
-      const fallback = buildLocalReading(selectedTheme, drawn, question);
+      const fallback = buildLocalReading(theme, drawn, q);
       setReadings(fallback);
       setPhase("report");
     }
   };
+
+  const handleDraw = async () => {
+    if (!selectedTheme) return;
+
+    if (selectedTheme.price > 0) {
+      setPhase("redirecting");
+      try {
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ themeId: selectedTheme.id, themeTitle: selectedTheme.title, question }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "checkout error");
+        window.location.href = data.url;
+      } catch (e) {
+        setPhase("form");
+        alert("決済画面の起動に失敗しました。時間をおいて再度お試しください。");
+      }
+      return;
+    }
+
+    runReading(selectedTheme, question);
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (!sessionId) return;
+    window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+
+    (async () => {
+      try {
+        const res = await fetch("/api/verify-checkout-session?session_id=" + encodeURIComponent(sessionId));
+        const data = await res.json();
+        if (!data.paid) return;
+        const theme = THEMES.find((t) => t.id === data.themeId);
+        if (!theme) return;
+        setSelectedTheme(theme);
+        setQuestion(data.question || "");
+        runReading(theme, data.question || "");
+      } catch (e) {
+        // 決済確認に失敗した場合は何もしない（フォームに留まる）
+      }
+    })();
+  }, []);
 
   const handleRestart = () => {
     setPhase("form");
@@ -241,6 +291,7 @@ export default function App() {
                       <div className="theme-title">
                         {theme.title}
                         <span className="theme-count">{theme.positions.length}枚引き</span>
+                        <span className="theme-price">{theme.price > 0 ? "¥" + theme.price.toLocaleString() : "無料"}</span>
                       </div>
                       <div className="theme-desc">{theme.desc}</div>
                     </button>
@@ -259,10 +310,19 @@ export default function App() {
                   />
                 </div>
                 <button className="draw-btn" disabled={!selectedTheme} onClick={handleDraw} style={{ marginTop: 20 }}>
-                  カードを引く
+                  {selectedTheme && selectedTheme.price > 0
+                    ? "¥" + selectedTheme.price.toLocaleString() + "を支払って鑑定する"
+                    : "カードを引く"}
                 </button>
               </div>
             </>
+          )}
+
+          {phase === "redirecting" && (
+            <div className="loading">
+              <div className="loading-ring" />
+              <div className="loading-msg">決済画面に移動しています</div>
+            </div>
           )}
 
           {phase === "loading" && (
