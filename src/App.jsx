@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { drawCards, meaningOf } from "./tarotDeck.js";
 import { CardArt } from "./CardArt.jsx";
+import { buildLocalReading } from "./localReading.js";
 
 const FONT_URL = "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap";
 
@@ -58,7 +59,6 @@ const STYLE = [
   ".report-text { font-size: 14px; line-height: 2.1; color: #c0b09a; white-space: pre-wrap; }",
   ".report-section { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }",
   ".rs-title { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }",
-  ".error-box { margin-top: 16px; padding: 14px 18px; border: 1px solid rgba(180,80,80,0.4); color: #c07070; font-size: 13px; text-align: center; }",
   ".restart-btn { display: block; width: 100%; margin-top: 32px; padding: 14px; border: 1px solid var(--gold-dim); background: transparent; color: var(--gold); font-size: 11px; cursor: pointer; }",
 ].join("\n");
 
@@ -102,11 +102,9 @@ export default function App() {
   const [stepIdx, setStepIdx] = useState(0);
   const [cards, setCards] = useState([]);
   const [readings, setReadings] = useState(null);
-  const [error, setError] = useState("");
 
   const handleDraw = async () => {
     if (!selectedTheme) return;
-    setError("");
     const drawn = drawCards(selectedTheme.positions.length);
     setCards(drawn);
     setPhase("loading");
@@ -131,33 +129,46 @@ export default function App() {
         "各ポジションについて150字程度で、カードの意味と向き（正位置/逆位置）を踏まえた具体的なメッセージを書いてください。最後に「総合メッセージ」として200字程度で全体のまとめを書いてください。\n\n" +
         sectionLabels.map((label) => "【" + label + "】\n\n").join("");
 
-      const res = await fetch("/api/generate-reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
+      let perPosition;
+      let overall;
+      try {
+        const res = await fetch("/api/generate-reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1500,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
 
-      const data = await res.json();
-      const text = data.content ? data.content.map((b) => b.text || "").join("") : "";
-      const parse = (label) => {
-        const match = text.match(new RegExp("【" + label + "】([\\s\\S]*?)(?=【|$)"));
-        return match ? match[1].trim() : "";
-      };
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error?.message || data.error || "API error");
+        const text = data.content ? data.content.map((b) => b.text || "").join("") : "";
+        const parse = (label) => {
+          const match = text.match(new RegExp("【" + label + "】([\\s\\S]*?)(?=【|$)"));
+          return match ? match[1].trim() : "";
+        };
+        perPosition = selectedTheme.positions.map((label) => parse(label));
+        overall = parse("総合メッセージ");
+        if (perPosition.some((t) => !t) || !overall) throw new Error("incomplete AI response");
+      } catch (aiError) {
+        // AIが使えない場合は、カードの意味から鑑定文をその場で組み立てる
+        const fallback = buildLocalReading(selectedTheme, drawn, question);
+        perPosition = fallback.perPosition;
+        overall = fallback.overall;
+      }
 
       clearTimeout(t1);
       clearTimeout(t2);
-      const perPosition = selectedTheme.positions.map((label) => parse(label));
-      setReadings({ perPosition, overall: parse("総合メッセージ"), raw: text });
+      setReadings({ perPosition, overall });
       setPhase("report");
     } catch (e) {
       clearTimeout(t1);
       clearTimeout(t2);
-      setError("鑑定中にエラーが発生しました。");
-      setPhase("form");
+      const fallback = buildLocalReading(selectedTheme, drawn, question);
+      setReadings(fallback);
+      setPhase("report");
     }
   };
 
@@ -215,7 +226,6 @@ export default function App() {
                 <button className="draw-btn" disabled={!selectedTheme} onClick={handleDraw} style={{ marginTop: 20 }}>
                   カードを引く
                 </button>
-                {error && <div className="error-box">{error}</div>}
               </div>
             </>
           )}
@@ -264,7 +274,7 @@ export default function App() {
               {selectedTheme.positions.map((label, i) => (
                 <div className="report-section" key={i}>
                   <div className="rs-title">{label}</div>
-                  <div className="report-text">{readings.perPosition[i] || readings.raw}</div>
+                  <div className="report-text">{readings.perPosition[i]}</div>
                 </div>
               ))}
 

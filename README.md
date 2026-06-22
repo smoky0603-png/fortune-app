@@ -28,3 +28,13 @@ Vercelダッシュボード → Settings → Environment Variables
 ### 5. 完成！
 デプロイ後に発行されるURLにアクセスすれば
 テーマを選んでタロットカードを引き、AIによる鑑定文を読むことができます。
+
+## ローカルで動かす
+
+```
+npm install
+echo "ANTHROPIC_API_KEY=sk-ant-xxxx" > .env
+npm run dev
+```
+
+`ANTHROPIC_API_KEY`を設定しなくても、AI鑑定が使えない場合はカードの意味から鑑定文をその場で組み立てるので、結果は必ず表示されます。
