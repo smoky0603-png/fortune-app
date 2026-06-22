@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { drawCards, meaningOf } from "./tarotDeck.js";
 import { CardArt } from "./CardArt.jsx";
 import { buildLocalReading } from "./localReading.js";
+import { TermsOfService, PrivacyPolicy, Tokushoho } from "./legal/LegalPages.jsx";
 
 const FONT_URL = "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap";
 
@@ -60,6 +61,9 @@ const STYLE = [
   ".report-section { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }",
   ".rs-title { font-size: 10px; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }",
   ".restart-btn { display: block; width: 100%; margin-top: 32px; padding: 14px; border: 1px solid var(--gold-dim); background: transparent; color: var(--gold); font-size: 11px; cursor: pointer; }",
+  ".footer { display: flex; justify-content: center; gap: 20px; padding: 32px 0 0; }",
+  ".footer-link { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0; }",
+  ".footer-link:hover { color: var(--gold); }",
 ].join("\n");
 
 const THEMES = [
@@ -95,13 +99,41 @@ function cardLabel(card) {
   return card.arcana === "major" ? card.num + " " + card.nameJa : card.nameJa;
 }
 
+const LEGAL_PAGES = {
+  "#/terms": TermsOfService,
+  "#/privacy": PrivacyPolicy,
+  "#/tokushoho": Tokushoho,
+};
+
 export default function App() {
+  const [hash, setHash] = useState(window.location.hash);
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [question, setQuestion] = useState("");
   const [phase, setPhase] = useState("form");
   const [stepIdx, setStepIdx] = useState(0);
   const [cards, setCards] = useState([]);
   const [readings, setReadings] = useState(null);
+
+  useEffect(() => {
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const LegalPage = LEGAL_PAGES[hash];
+  if (LegalPage) {
+    return (
+      <>
+        <style>{STYLE}</style>
+        <div className="app">
+          <div className="stars" />
+          <div className="wrap">
+            <LegalPage onBack={() => (window.location.hash = "")} />
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const handleDraw = async () => {
     if (!selectedTheme) return;
@@ -293,6 +325,18 @@ export default function App() {
               </button>
             </div>
           )}
+
+          <div className="footer">
+            <button className="footer-link" onClick={() => (window.location.hash = "#/terms")}>
+              利用規約
+            </button>
+            <button className="footer-link" onClick={() => (window.location.hash = "#/privacy")}>
+              プライバシーポリシー
+            </button>
+            <button className="footer-link" onClick={() => (window.location.hash = "#/tokushoho")}>
+              特定商取引法に基づく表記
+            </button>
+          </div>
         </div>
       </div>
     </>
