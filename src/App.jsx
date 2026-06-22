@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { drawCards, meaningOf } from "./tarotDeck.js";
+import { CardArt } from "./CardArt.jsx";
 
 const FONT_URL = "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap";
 
@@ -44,10 +45,12 @@ const STYLE = [
   "@keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }",
   ".card-slot { animation: cardEnter 0.6s ease both; }",
   ".position-label { font-size: 10px; letter-spacing: 0.2em; color: var(--gold); text-align: center; margin-bottom: 8px; text-transform: uppercase; }",
-  ".card-face { background: var(--deep); border: 1px solid var(--gold-dim); padding: 20px 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }",
+  ".card-face { background: var(--deep); border: 1px solid var(--gold-dim); padding: 20px 12px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }",
   ".card-face.is-reversed { border-style: dashed; }",
-  ".card-symbol { font-size: 22px; transform: rotate(0deg); }",
-  ".card-face.is-reversed .card-symbol { transform: rotate(180deg); }",
+  ".card-art { display: flex; align-items: center; justify-content: center; transition: transform 0.3s; }",
+  ".card-art-pips { display: grid; gap: 4px; justify-content: center; align-items: center; }",
+  ".card-art-court { display: flex; flex-direction: column; align-items: center; gap: 2px; }",
+  ".card-face.is-reversed .card-art { transform: rotate(180deg); }",
   ".card-num { font-family: 'Cormorant Garamond', serif; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }",
   ".card-name { font-size: 15px; color: var(--ink); line-height: 1.4; }",
   ".card-orientation { font-size: 10px; color: var(--gold); letter-spacing: 0.15em; }",
@@ -89,12 +92,7 @@ const THEMES = [
 const STEPS = ["カードをシャッフル中...", "カードの意味を読み解いています...", "メッセージを紡いでいます..."];
 
 function cardLabel(card) {
-  const num = card.arcana === "major" ? card.num : card.num;
-  return card.arcana === "major" ? num + " " + card.nameJa : card.nameJa;
-}
-
-function cardSymbol(card) {
-  return card.arcana === "major" ? "✦" : card.symbol;
+  return card.arcana === "major" ? card.num + " " + card.nameJa : card.nameJa;
 }
 
 export default function App() {
@@ -251,7 +249,7 @@ export default function App() {
                       <div className="card-slot" style={{ animationDelay: i * 150 + "ms" }} key={i}>
                         <div className="position-label">{label}</div>
                         <div className={"card-face" + (c.isReversed ? " is-reversed" : "")}>
-                          <div className="card-symbol">{cardSymbol(c)}</div>
+                          <CardArt card={c} size={40} />
                           <div className="card-num">{cardLabel(c)}</div>
                           <div className="card-name">{c.nameJa}</div>
                           <div className="card-orientation">{c.isReversed ? "逆位置" : "正位置"}</div>
