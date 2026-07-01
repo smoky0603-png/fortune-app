@@ -33,6 +33,28 @@ npm run dev
 
 `ANTHROPIC_API_KEY`を設定しなくても、タスク抽出・メール下書きはローカルの簡易ロジックで必ず結果が表示されます。
 
+## スマホアプリ化（Capacitor / Android）
+
+Webアプリの資産をそのまま使い、Capacitorでネイティブアプリの殻に包んでいます。
+`android/` フォルダはCapacitorが生成したネイティブプロジェクトで、Android Studioで開いてビルドします。
+
+```
+cd secretary-app
+npm run build          # dist/ を最新化
+npx cap sync android    # dist/ の内容をネイティブプロジェクトへ反映
+npx cap open android    # Android Studioが起動する（要インストール）
+```
+
+Android Studio側で「Run」すればエミュレータ/実機で動作確認、「Build > Generate Signed Bundle / APK」でストア提出用のビルドが作れます。
+
+iOSアプリ化にはXcode（Mac環境）が必須のため、Macで以下を実行してください。
+
+```
+npm install @capacitor/ios
+npx cap add ios
+npx cap open ios
+```
+
 ## 今後のロードマップ
 
 - v1.5: 音声入力・会議の自動文字起こし＋要約
